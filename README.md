@@ -12,7 +12,6 @@ Create file `include/config.h`:
 ```cpp
 #define MQTT_SERVER "your mqtt server hostname or ip address"
 #define DCC_PIN 23
-#define DCC_OUTPUT_ADDRESS_MODE
 ```
 
 ## Usage

@@ -10,14 +10,6 @@
   #define DCC_PULLUP 0
 #endif
 
-#ifdef DCC_OUTPUT_ADDRESS_MODE
-  #define DCC_FLAGS FLAGS_OUTPUT_ADDRESS_MODE
-#endif
-
-#ifndef DCC_FLAGS
-  #define DCC_FLAGS 0
-#endif
-
 #include <NmraDcc.h>
 NmraDcc dcc;
 
@@ -63,7 +55,7 @@ void setup() {
   Serial.println("Connected to MQTT server");
 
   dcc.pin(DCC_PIN, DCC_PULLUP);
-  dcc.init(MAN_ID_DIY, 1, DCC_FLAGS | FLAGS_DCC_ACCESSORY_DECODER, 0);
+  dcc.init(MAN_ID_DIY, 1, FLAGS_DCC_ACCESSORY_DECODER, 0);
 }
 
 void loop() {
