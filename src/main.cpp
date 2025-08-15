@@ -187,16 +187,18 @@ void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
   Serial.printf("dcc turnoutboard addr=%d pair=%d dir=%d pow=%d\n", BoardAddr,
                 OutputPair, Direction, OutputPower);
   String topic = DCC_TOPIC "/turnoutBoard/";
+  topic += BoardAddr;
+  topic += '/';
   topic += OutputPair;
   topic += '/';
   topic += Direction;
-  topic += '/';
   client.publish(topic.c_str(), OutputPower ? "1" : "0");
 
   if (OutputPower == 1) {
     String topic = DCC_TOPIC "/turnoutPair/";
-    topic += OutputPair;
+    topic += BoardAddr;
     topic += '/';
+    topic += OutputPair;
     client.publish(topic.c_str(), Direction ? "1" : "0");
   }
 }
