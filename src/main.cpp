@@ -13,11 +13,18 @@
 #include <NmraDcc.h>
 NmraDcc dcc;
 
-#include <WiFi.h>
-#include "wificredentials.h"
+#ifdef ARDUINO_ARCH_ESP32
+  #include <WiFi.h>
+  #include "wificredentials.h"
 
-#if !defined(WIFI_SSID) || !defined(WIFI_PASS)
-  #error WiFi credentials not defined
+  #if !defined(WIFI_SSID) || !defined(WIFI_PASS)
+    #error WiFi credentials not defined
+  #endif
+
+WiFiClient netClient;
+#else
+  #include <Ethernet.h>
+EthernetClient netClient;
 #endif
 
 #include <PubSubClient.h>
@@ -30,17 +37,40 @@ NmraDcc dcc;
   #define MQTT_PORT 1883
 #endif
 
-WiFiClient espClient;
-PubSubClient client(MQTT_SERVER, MQTT_PORT, espClient);
+#if !defined(MQTT_USER) || !defined(MQTT_PASS)
+  #warning MQTT credentials not provided
+#endif
+
+PubSubClient client(MQTT_SERVER, MQTT_PORT, netClient);
 
 #ifndef DCC_TOPIC
   #define DCC_TOPIC "dcc"
+#endif
+
+#ifdef ARDUINO_ARCH_ESP32
+  #define Sprintf Serial.printf
+#else
+  #define Sprintf Serialprintf
+template <typename T>
+void Serialprintf(T cur) {
+  Serial.print(" ");
+  Serial.print(cur);
+  Serial.println();
+}
+template <typename T, typename... Args>
+void Serialprintf(T next, Args... args) {
+  Serial.print(" ");
+  Serial.print(next);
+  Serialprintf(args...);
+}
+
 #endif
 
 void setup() {
   Serial.begin(115200);
   Serial.println("DCC MQTT Gateway");
 
+#ifdef ARDUINO_ARCH_ESP32
   Serial.printf("Connecting to WiFi network %s\n", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -48,10 +78,23 @@ void setup() {
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+#else
+  static byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+  #ifdef ETHERNET_CS_PIN
+  Ethernet.init(ETHERNET_CS_PIN);
+  #endif
+  Ethernet.begin(mac);
+#endif
 
-  Serial.printf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
+  Sprintf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
+  // Serial.println("Connecting to MQTT server \"" + String(MQTT_SERVER) +
+  // "\"");
   while (!client.connected())
-    client.connect("DCC-MQTT-Relay", "ha", "ha");
+#if defined(MQTT_USER) && defined(MQTT_PASS)
+    client.connect("DCC-MQTT-Relay", MQTT_USER, MQTT_PASS);
+#else
+    client.connect("DCC-MQTT-Relay");
+#endif
   Serial.println("Connected to MQTT server");
 
   dcc.pin(DCC_PIN, DCC_PULLUP);
@@ -121,10 +164,12 @@ uint8_t getFunctionGroupOffset(FN_GROUP functionGroup) {
   }
 }
 
+template <typename Callback>
 void forEachFunctionBit(
     FN_GROUP functionGroup,
     uint8_t functionState,
-    std::function<void(uint8_t functionNumber, bool functionState)> callback) {
+    // void (*callback)(uint8_t functionNumber,bool functionState)
+    Callback callback) {
   uint8_t bitCount = 0;
   switch (functionGroup) {
 #ifdef NMRA_DCC_ENABLE_14_SPEED_STEP_MODE
@@ -176,8 +221,8 @@ void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
                               uint8_t OutputPair,
                               uint8_t Direction,
                               uint8_t OutputPower) {
-  Serial.printf("dcc turnoutboard addr=%d pair=%d dir=%d pow=%d\n", BoardAddr,
-                OutputPair, Direction, OutputPower);
+  Sprintf("dcc turnoutboard addr=%d pair=%d dir=%d pow=%d\n", BoardAddr,
+          OutputPair, Direction, OutputPower);
   String topic = DCC_TOPIC "/turnoutBoard/";
   topic += BoardAddr;
   topic += '/';
@@ -197,8 +242,8 @@ void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
 void notifyDccAccTurnoutOutput(uint16_t Addr,
                                uint8_t Direction,
                                uint8_t OutputPower) {
-  Serial.printf("dcc turnoutoutput addr=%d dir=%d pow=%d\n", Addr, Direction,
-                OutputPower);
+  Sprintf("dcc turnoutoutput addr=%d dir=%d pow=%d\n", Addr, Direction,
+          OutputPower);
   String topic = DCC_TOPIC "/turnoutOutput/";
   topic += Addr;
   topic += '/';
