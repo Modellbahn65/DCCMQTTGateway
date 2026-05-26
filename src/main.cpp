@@ -13,7 +13,7 @@
 #include <NmraDcc.h>
 NmraDcc dcc;
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32) && !defined(USE_ETHERNET)
   #include <WiFi.h>
   #include "wificredentials.h"
 
@@ -70,7 +70,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("DCC MQTT Gateway");
 
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32) && !defined(USE_ETHERNET)
   Serial.printf("Connecting to WiFi network %s\n", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
@@ -87,8 +87,6 @@ void setup() {
 #endif
 
   Sprintf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
-  // Serial.println("Connecting to MQTT server \"" + String(MQTT_SERVER) +
-  // "\"");
   while (!client.connected())
 #if defined(MQTT_USER) && defined(MQTT_PASS)
     client.connect("DCC-MQTT-Relay", MQTT_USER, MQTT_PASS);
