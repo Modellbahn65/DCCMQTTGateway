@@ -41,6 +41,10 @@ EthernetClient netClient;
   #warning MQTT credentials not provided
 #endif
 
+#ifndef MQTT_NAME
+  #define MQTT_NAME "DCC-MQTT-Relay"
+#endif
+
 PubSubClient client(MQTT_SERVER, MQTT_PORT, netClient);
 
 #ifndef DCC_TOPIC
@@ -89,9 +93,9 @@ void setup() {
   Sprintf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
   while (!client.connected())
 #if defined(MQTT_USER) && defined(MQTT_PASS)
-    client.connect("DCC-MQTT-Relay", MQTT_USER, MQTT_PASS);
+    client.connect(MQTT_NAME, MQTT_USER, MQTT_PASS);
 #else
-    client.connect("DCC-MQTT-Relay");
+    client.connect(MQTT_NAME);
 #endif
   Serial.println("Connected to MQTT server");
 
