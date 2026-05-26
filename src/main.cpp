@@ -120,8 +120,13 @@ void setup() {
 }
 
 void loop() {
-  client.loop();
   dcc.process();
+  bool mqttConnected = client.loop();
+  if (!mqttConnected) {
+    Serial.println("MQTT connection lost!");
+    sleep(10);
+    ESP.restart();
+  }
 }
 
 String getTopicAddressString(uint16_t address, DCC_ADDR_TYPE addrType) {
