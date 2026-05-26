@@ -72,6 +72,7 @@ void Serialprintf(T next, Args... args) {
 
 void setup() {
   Serial.begin(115200);
+  Serial.println();
   Serial.println("DCC MQTT Gateway");
 
 #if defined(ARDUINO_ARCH_ESP32) && !defined(USE_ETHERNET)
@@ -87,7 +88,22 @@ void setup() {
   #ifdef ETHERNET_CS_PIN
   Ethernet.init(ETHERNET_CS_PIN);
   #endif
-  Ethernet.begin(mac);
+  bool dhcpSuccess = Ethernet.begin(mac);
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("No Ethernet Hardware detected!");
+    sleep(10);
+    ESP.restart();
+  }
+  if (Ethernet.linkStatus() != LinkON) {
+    Serial.println("No Ethernet Link detected!");
+    sleep(10);
+    ESP.restart();
+  }
+  if (!dhcpSuccess) {
+    Serial.println("DHCP setup failed!");
+    sleep(10);
+    ESP.restart();
+  }
 #endif
 
   Sprintf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
