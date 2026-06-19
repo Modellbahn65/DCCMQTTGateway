@@ -87,6 +87,17 @@ void setup() {
   ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_ETH));
   Serial.printf("ESP_MAC_ETH: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1],
                 mac[2], mac[3], mac[4], mac[5]);
+  #ifdef ETHERNET_MAC
+  int result = sscanf(ETHERNET_MAC, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &mac[0],
+                      &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+  if (result != 6) {
+    Serial.println("Parsing ETHERNET_MAC address failed!");
+    while (true)
+      sleep(1);
+  }
+  Serial.printf("ETHERNET_MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1],
+                mac[2], mac[3], mac[4], mac[5]);
+  #endif
   #ifdef ETHERNET_CS_PIN
   Ethernet.init(ETHERNET_CS_PIN);
   #endif
