@@ -51,25 +51,6 @@ PubSubClient client(MQTT_SERVER, MQTT_PORT, netClient);
   #define DCC_TOPIC "dcc"
 #endif
 
-#ifdef ARDUINO_ARCH_ESP32
-  #define Sprintf Serial.printf
-#else
-  #define Sprintf Serialprintf
-template <typename T>
-void Serialprintf(T cur) {
-  Serial.print(" ");
-  Serial.print(cur);
-  Serial.println();
-}
-template <typename T, typename... Args>
-void Serialprintf(T next, Args... args) {
-  Serial.print(" ");
-  Serial.print(next);
-  Serialprintf(args...);
-}
-
-#endif
-
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -120,7 +101,7 @@ void setup() {
   Serial.printf("IP-Address: %s\n", Ethernet.localIP().toString().c_str());
 #endif
 
-  Sprintf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
+  Serial.printf("Connecting to MQTT server \"%s\"\n", MQTT_SERVER);
   while (!client.connected())
 #if defined(MQTT_USER) && defined(MQTT_PASS)
     client.connect(MQTT_NAME, MQTT_USER, MQTT_PASS);
@@ -258,8 +239,8 @@ void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
                               uint8_t OutputPair,
                               uint8_t Direction,
                               uint8_t OutputPower) {
-  Sprintf("dcc turnoutboard addr=%d pair=%d dir=%d pow=%d\n", BoardAddr,
-          OutputPair, Direction, OutputPower);
+  Serial.printf("dcc turnoutboard addr=%d pair=%d dir=%d pow=%d\n", BoardAddr,
+                OutputPair, Direction, OutputPower);
   String topic = DCC_TOPIC "/turnoutBoard/";
   topic += BoardAddr;
   topic += '/';
@@ -279,8 +260,8 @@ void notifyDccAccTurnoutBoard(uint16_t BoardAddr,
 void notifyDccAccTurnoutOutput(uint16_t Addr,
                                uint8_t Direction,
                                uint8_t OutputPower) {
-  Sprintf("dcc turnoutoutput addr=%d dir=%d pow=%d\n", Addr, Direction,
-          OutputPower);
+  Serial.printf("dcc turnoutoutput addr=%d dir=%d pow=%d\n", Addr, Direction,
+                OutputPower);
   String topic = DCC_TOPIC "/turnoutOutput/";
   topic += Addr;
   topic += '/';
